@@ -30,6 +30,7 @@
 
    The script bumps `VERSION` and `app/package.json`, dates the changelog
    section, commits `Release v1.1.0` and creates the annotated tag.
+
    **Or release from the browser:** bump `VERSION`, `app/package.json` and
    `CHANGELOG.md` on `main`, then open **Actions → Release → Run workflow**
    on `main` and enter the tag (for example `v1.1.0`). The workflow builds
