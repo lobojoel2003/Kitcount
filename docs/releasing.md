@@ -30,7 +30,13 @@
 
    The script bumps `VERSION` and `app/package.json`, dates the changelog
    section, commits `Release v1.1.0` and creates the annotated tag.
-3. The tag triggers [`release.yml`](../.github/workflows/release.yml):
+   **Or release from the browser:** bump `VERSION`, `app/package.json` and
+   `CHANGELOG.md` on `main`, then open **Actions → Release → Run workflow**
+   on `main` and enter the tag (for example `v1.1.0`). The workflow builds
+   the current `main` commit and creates the tag on it only after every
+   artifact has built. Running it for a tag that already exists rebuilds
+   that tag.
+3. The tag (or the manual run) triggers [`release.yml`](../.github/workflows/release.yml):
 
    | Job | Output |
    | --- | --- |

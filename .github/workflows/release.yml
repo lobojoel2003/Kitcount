@@ -1,7 +1,12 @@
 name: Release
 
-# Pushing a tag vMAJOR.MINOR.PATCH (see scripts/release.sh) builds every
-# artifact, attests their provenance and publishes a GitHub release.
+# Two ways to release:
+#  - Push a tag vMAJOR.MINOR.PATCH (see scripts/release.sh).
+#  - Run this workflow from the Actions tab on `main` with the tag to create,
+#    e.g. v1.0.0. The tag must match /VERSION; it is created on the exact
+#    commit that was built, and only after every artifact built successfully.
+#    Running it for a tag that already exists rebuilds that tag.
+# Either way every artifact is attested and published as a GitHub release.
 
 on:
   push:
@@ -9,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to (re)build, e.g. v1.0.0
+        description: Release tag, e.g. v1.0.0 (must match /VERSION)
         required: true
 
 permissions:
@@ -29,17 +34,39 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
+      exists: ${{ steps.ref.outputs.exists }}
       version: ${{ steps.v.outputs.VERSION }}
       build: ${{ steps.v.outputs.BUILD }}
       commit: ${{ steps.v.outputs.COMMIT }}
       date: ${{ steps.v.outputs.DATE }}
     steps:
       - id: meta
-        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag must look like v1.2.3 (got '$TAG')"; exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v7
         with:
-          ref: ${{ steps.meta.outputs.tag }}
           fetch-depth: 0
+      - name: Select the commit to build
+        id: ref
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          git fetch --tags --force origin
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            git checkout -q "refs/tags/$TAG"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Building existing tag $TAG at $(git rev-parse HEAD)"
+          elif [ "${{ github.event_name }}" = workflow_dispatch ] && [ "${{ github.ref }}" = refs/heads/main ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Building main at $(git rev-parse HEAD); $TAG will be created when the release is published"
+          else
+            echo "::error::$TAG does not exist. Push the tag, or run this workflow on main to create it."; exit 1
+          fi
       - id: v
         run: scripts/version.sh | tee -a "$GITHUB_OUTPUT"
       - name: Tag matches VERSION
@@ -87,6 +114,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       skip-android: true
+      ref: ${{ needs.prepare.outputs.commit }}
 
   server-binaries:
     name: Server · ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -107,7 +135,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
       - uses: actions/setup-go@v7
         with:
           go-version-file: server/go.mod
@@ -154,7 +182,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
@@ -211,7 +239,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -267,7 +295,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.prepare.outputs.tag }}
+          ref: ${{ needs.prepare.outputs.commit }}
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -305,6 +333,8 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
+          # Creates the tag on the built commit when it does not exist yet.
+          target_commitish: ${{ needs.prepare.outputs.commit }}
           name: Kitcount ${{ needs.prepare.outputs.version }}
           body_path: artifacts/release-notes.md
           make_latest: true
