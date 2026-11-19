@@ -41,6 +41,12 @@ awk -v v="$new" -v d="$today" '
   /^## \[Unreleased\]/ && !done { print; print ""; print "## [" v "] - " d; done=1; next }
   { print }
 ' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
+# Update the compare links at the bottom.
+repo="https://github.com/lobojoel2003/Kitcount"
+awk -v v="$new" -v repo="$repo" '
+  /^\[Unreleased\]: / { print "[Unreleased]: " repo "/compare/v" v "...HEAD"; print "[" v "]: " repo "/releases/tag/v" v; next }
+  { print }
+' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
 
 git add VERSION app/package.json CHANGELOG.md
 git commit -m "Release v$new"
