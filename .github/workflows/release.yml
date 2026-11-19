@@ -321,15 +321,32 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Download only release assets (the run also holds CI coverage, smoke
+      # screenshots and Docker build records, which must not be published).
       - uses: actions/download-artifact@v8
         with:
+          pattern: server-*
           path: artifacts
           merge-multiple: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: android
+          path: artifacts
+      - uses: actions/download-artifact@v8
+        with:
+          name: web-demo
+          path: artifacts
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-notes
+          path: artifacts
       - name: Checksums
         working-directory: artifacts
         run: |
-          sha256sum $(ls | grep -v '^release-notes.md$') > SHA256SUMS
+          ls -l
+          sha256sum *.apk *.aab *.tar.gz *.zip > SHA256SUMS
           cat SHA256SUMS
+          test "$(wc -l < SHA256SUMS)" -eq 8 || { echo "::error::expected 8 release files"; exit 1; }
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
