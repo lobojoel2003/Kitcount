@@ -37,16 +37,7 @@ export interface SyncTransport {
   pull(after: number, limit: number): Promise<PullPage>;
 }
 
-export type SyncErrorKind =
-  | 'offline'
-  | 'timeout'
-  | 'unauthorized'
-  | 'revoked'
-  | 'wipe'
-  | 'rejected'
-  | 'server'
-  | 'protocol'
-  | 'config';
+export type SyncErrorKind = 'offline' | 'timeout' | 'unauthorized' | 'revoked' | 'wipe' | 'rejected' | 'server' | 'protocol' | 'config';
 
 export class SyncError extends Error {
   constructor(
@@ -123,7 +114,8 @@ export class HttpTransport implements SyncTransport {
 
     const code = typeof payload.error === 'string' ? payload.error : '';
     const msg = typeof payload.message === 'string' ? payload.message : `HTTP ${res.status}`;
-    if (res.status === 410 || code === 'device_wipe') throw new SyncError('wipe', 'This device was remotely wiped by an administrator', res.status);
+    if (res.status === 410 || code === 'device_wipe')
+      throw new SyncError('wipe', 'This device was remotely wiped by an administrator', res.status);
     if (code === 'device_revoked') throw new SyncError('revoked', 'This device has been revoked by an administrator', res.status);
     if (res.status === 401 || res.status === 403) throw new SyncError('unauthorized', 'The device token was not accepted', res.status);
     if (res.status === 400 || res.status === 413 || res.status === 422) throw new SyncError('rejected', msg, res.status);

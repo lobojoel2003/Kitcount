@@ -20,7 +20,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
 export function monthPeriod(year: number, month0: number): Period {
   const start = new Date(year, month0, 1);
   const end = new Date(year, month0 + 1, 1);
-  return { kind: 'month', start, end, label: `${MONTHS[start.getMonth()]} ${start.getFullYear()}`, key: `${start.getFullYear()}-${pad(start.getMonth() + 1)}` };
+  return {
+    kind: 'month',
+    start,
+    end,
+    label: `${MONTHS[start.getMonth()]} ${start.getFullYear()}`,
+    key: `${start.getFullYear()}-${pad(start.getMonth() + 1)}`,
+  };
 }
 
 export function quarterPeriod(year: number, quarter: 1 | 2 | 3 | 4): Period {

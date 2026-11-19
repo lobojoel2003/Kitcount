@@ -1,0 +1,8 @@
+node_modules
+dist
+dist-smoke
+coverage
+android
+ios
+package-lock.json
+src/core/reports/bundled-templates.ts

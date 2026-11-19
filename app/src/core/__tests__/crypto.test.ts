@@ -113,7 +113,13 @@ describe('program keys and enrollment', () => {
 
   it('round-trips an enrollment code', () => {
     const { programId, secret } = generateProgram();
-    const code = encodeEnrollment({ programId, secret, programName: 'Harbor Harm Reduction', templateId: 'generic-monthly', serverUrl: 'https://sync.example.org' });
+    const code = encodeEnrollment({
+      programId,
+      secret,
+      programName: 'Harbor Harm Reduction',
+      templateId: 'generic-monthly',
+      serverUrl: 'https://sync.example.org',
+    });
     expect(code.startsWith('kitcount:join:v1:')).toBe(true);
     const back = decodeEnrollment(`  ${code}\n`);
     expect(back.programId).toBe(programId);

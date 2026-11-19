@@ -103,7 +103,18 @@ function idList(where: string, v: unknown): string[] | undefined {
 }
 
 const ROW_KEYS = new Set(['id', 'code', 'label', 'help', 'metric', 'formula', 'format', 'supply', 'referral', 'anonymous']);
-const TOP_KEYS = new Set(['kitcount_template', 'id', 'name', 'jurisdiction', 'period', 'version', 'description', 'source', 'disclaimer', 'sections']);
+const TOP_KEYS = new Set([
+  'kitcount_template',
+  'id',
+  'name',
+  'jurisdiction',
+  'period',
+  'version',
+  'description',
+  'source',
+  'disclaimer',
+  'sections',
+]);
 
 export function validateTemplate(doc: unknown): ReportTemplate {
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) fail('template', 'must be a YAML mapping');

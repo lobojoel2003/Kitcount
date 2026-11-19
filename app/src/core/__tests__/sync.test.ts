@@ -40,7 +40,10 @@ describe('syncOnce', () => {
     const server = new FakeServer();
     const a = new MemoryStore();
     const b = new MemoryStore();
-    await a.appendLocal([received('syringes', 1000, '2026-10-01T00:00:00.000Z', DEVICE_A), visit(keys, '2026-10-01T10:00:00.000Z', { code: 'JD03', out: { syringes: 10 } })]);
+    await a.appendLocal([
+      received('syringes', 1000, '2026-10-01T00:00:00.000Z', DEVICE_A),
+      visit(keys, '2026-10-01T10:00:00.000Z', { code: 'JD03', out: { syringes: 10 } }),
+    ]);
     await b.appendLocal([visit(keys, '2026-10-01T11:00:00.000Z', { code: 'JD03', device: DEVICE_B })]);
 
     const r1 = await syncOnce({ store: a, keys, transport: server.transport(DEVICE_A), pushBatch: 1, pullBatch: 1 });
@@ -127,13 +130,15 @@ describe('syncOnce', () => {
 });
 
 describe('HttpTransport', () => {
-  const respond = (status: number, body: unknown) => async () => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
+  const respond = (status: number, body: unknown) => async () =>
+    new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });
 
   it('sends bearer auth and parses responses', async () => {
     const calls: { url: string; init?: RequestInit }[] = [];
     const fetchImpl = async (url: string, init?: RequestInit) => {
       calls.push({ url, init });
-      if (url.endsWith('/v1/whoami')) return new Response(JSON.stringify({ device: { id: 'd', name: 'Van' }, server: { version: '1.0.0' } }));
+      if (url.endsWith('/v1/whoami'))
+        return new Response(JSON.stringify({ device: { id: 'd', name: 'Van' }, server: { version: '1.0.0' } }));
       if (init?.method === 'POST') return new Response(JSON.stringify({ accepted: 1, duplicates: 0 }));
       return new Response(JSON.stringify({ events: [], next: 0, more: false }));
     };
@@ -178,7 +183,9 @@ describe('HttpTransport', () => {
     );
     await expect(slow.whoami()).rejects.toMatchObject({ kind: 'timeout' });
 
-    await expect(new HttpTransport('https://s.example.org', 't', respond(200, 'not json')).whoami()).rejects.toMatchObject({ kind: 'protocol' });
+    await expect(new HttpTransport('https://s.example.org', 't', respond(200, 'not json')).whoami()).rejects.toMatchObject({
+      kind: 'protocol',
+    });
     await expect(new HttpTransport('https://s.example.org', 't', respond(200, {})).whoami()).rejects.toMatchObject({ kind: 'protocol' });
     await expect(new HttpTransport('https://s.example.org', 't', respond(200, {})).push([])).rejects.toMatchObject({ kind: 'protocol' });
     await expect(new HttpTransport('https://s.example.org', 't', respond(200, {})).pull(0, 1)).rejects.toMatchObject({ kind: 'protocol' });

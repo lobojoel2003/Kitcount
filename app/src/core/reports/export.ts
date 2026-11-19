@@ -13,7 +13,11 @@ function isoDate(d: Date): string {
 }
 
 export function reportFilename(report: Report, ext: 'csv' | 'pdf'): string {
-  const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const slug = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   return `kitcount-${slug(report.templateId)}-${report.period.key}.${ext}`;
 }
 

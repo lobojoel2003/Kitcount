@@ -30,5 +30,7 @@ export function allTemplates(importedYaml: string[]): TemplateEntry[] {
       // A stored template that no longer validates is skipped rather than crashing the app.
     }
   }
-  return Array.from(byId.values()).sort((a, b) => a.template.name.localeCompare(b.template.name));
+  // Imported (state-specific) templates first, worked examples last.
+  const rank = (e: TemplateEntry) => (e.source === 'imported' ? 0 : e.template.id.startsWith('example') ? 2 : 1);
+  return Array.from(byId.values()).sort((a, b) => rank(a) - rank(b) || a.template.name.localeCompare(b.template.name));
 }

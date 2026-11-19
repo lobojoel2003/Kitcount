@@ -32,7 +32,9 @@ describe('bundled templates', () => {
 
   it.each(files)('%s computes without warnings on the default catalog', (file) => {
     const t = parseTemplate(readFileSync(join(templatesDir, file), 'utf8'));
-    const r = computeReport(t, new Ledger(), currentPeriod(t.period), { manualValues: Object.fromEntries(t.sections.flatMap((s) => s.rows.map((row) => [row.id, 1]))) });
+    const r = computeReport(t, new Ledger(), currentPeriod(t.period), {
+      manualValues: Object.fromEntries(t.sections.flatMap((s) => s.rows.map((row) => [row.id, 1]))),
+    });
     expect(r.warnings).toEqual([]);
   });
 });
@@ -119,9 +121,12 @@ describe('formulas', () => {
     expect([...formulaRefs(parseFormula('(a + b) / -c * 2'))].sort()).toEqual(['a', 'b', 'c']);
   });
 
-  it.each(['', '1 +', '(1', '1)', 'a b', 'a $ b', '*', '1..2', `${'('.repeat(40)}1${')'.repeat(40)}`, 'x'.repeat(501)])('rejects %p', (src) => {
-    expect(() => parseFormula(src)).toThrow();
-  });
+  it.each(['', '1 +', '(1', '1)', 'a b', 'a $ b', '*', '1..2', `${'('.repeat(40)}1${')'.repeat(40)}`, 'x'.repeat(501)])(
+    'rejects %p',
+    (src) => {
+      expect(() => parseFormula(src)).toThrow();
+    },
+  );
 });
 
 describe('periods', () => {
@@ -166,7 +171,13 @@ describe('computeReport', () => {
     // JD03 first came in September: returning in October.
     visit(keys, new Date(2026, 8, 20).toISOString(), { code: 'JD03', out: { syringes: 50 } }),
     visit(keys, inOct(1), { code: 'JD03', out: { syringes: 100, naloxone_nasal: 2 }, syringesIn: 80, reversals: 1, referrals: ['moud'] }),
-    visit(keys, inOct(3), { code: 'AB11', out: { syringes: 40, fentanyl_strips: 10 }, syringesIn: 40, referrals: ['hiv_testing', 'hcv_testing'], device: DEVICE_B }),
+    visit(keys, inOct(3), {
+      code: 'AB11',
+      out: { syringes: 40, fentanyl_strips: 10 },
+      syringesIn: 40,
+      referrals: ['hiv_testing', 'hcv_testing'],
+      device: DEVICE_B,
+    }),
     visit(keys, inOct(9), { code: 'AB11', out: { naloxone_im: 1 }, secondary: 3 }),
     visit(keys, inOct(12), { code: null, out: { syringes: 10 } }),
     // November: outside the period.

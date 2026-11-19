@@ -41,7 +41,13 @@ run('sync against kitcount-server', () => {
     const storeB = new MemoryStore();
     const events = [received('naloxone_nasal', 48, '2026-10-01T08:00:00.000Z', DEVICE_A)];
     for (let i = 0; i < 260; i++) {
-      events.push(visit(keys, new Date(Date.UTC(2026, 9, 1, 9, 0, i)).toISOString(), { code: `P${i % 40}X`, out: { syringes: 10, naloxone_nasal: i % 10 === 0 ? 1 : 0 }, syringesIn: 5 }));
+      events.push(
+        visit(keys, new Date(Date.UTC(2026, 9, 1, 9, 0, i)).toISOString(), {
+          code: `P${i % 40}X`,
+          out: { syringes: 10, naloxone_nasal: i % 10 === 0 ? 1 : 0 },
+          syringesIn: 5,
+        }),
+      );
     }
     await storeA.appendLocal(events);
     await storeB.appendLocal([visit(keys, '2026-10-02T12:00:00.000Z', { code: 'P1X', device: DEVICE_B, referrals: ['moud'] })]);
@@ -66,7 +72,10 @@ run('sync against kitcount-server', () => {
     expect(la.onHand().naloxone_nasal).toBe(48 - 26);
 
     // Pushing the same events again is a no-op on the server.
-    expect(await ta.push((await storeA.allEvents()).slice(0, 3).map((e) => ({ id: e.id, blob: 'A'.repeat(60) })))).toEqual({ accepted: 0, duplicates: 3 });
+    expect(await ta.push((await storeA.allEvents()).slice(0, 3).map((e) => ({ id: e.id, blob: 'A'.repeat(60) })))).toEqual({
+      accepted: 0,
+      duplicates: 3,
+    });
 
     await admin(`/v1/admin/devices/${b.device.id}/wipe`, {});
     await expect(syncOnce({ store: storeB, keys, transport: tb })).rejects.toMatchObject({ kind: 'wipe' });

@@ -125,6 +125,11 @@ export class Ledger {
     return this.config().catalog;
   }
 
+  /** Whether any device has explicitly set this configuration key. */
+  hasConfig(key: ConfigKey): boolean {
+    return this.configEvents.has(key);
+  }
+
   // -------------------------------------------------------------------------
   // Visits and participants
   // -------------------------------------------------------------------------
@@ -255,7 +260,8 @@ export class Ledger {
           supply,
           onHand: qty,
           low: qty <= supply.lowAt,
-          visitsLeft: rate && rate > 0 ? Math.max(0, Math.floor(qty / rate)) : null,
+          // Forecasts beyond a few hundred visits are noise, not information.
+          visitsLeft: rate && rate > 0 && qty / rate < 1000 ? Math.max(0, Math.floor(qty / rate)) : null,
         };
       });
   }

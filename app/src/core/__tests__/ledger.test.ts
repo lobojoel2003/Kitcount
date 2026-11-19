@@ -22,7 +22,11 @@ describe('Ledger', () => {
     const l = new Ledger([
       received('syringes', 1000, '2026-10-01T08:00:00.000Z', DEVICE_A),
       received('syringes', 500, '2026-10-01T08:00:00.000Z', DEVICE_B),
-      createEvent(DEVICE_A, { type: 'stock.adjusted', supply: 'syringes', delta: -50, reason: 'damaged' }, new Date('2026-10-01T09:00:00.000Z')),
+      createEvent(
+        DEVICE_A,
+        { type: 'stock.adjusted', supply: 'syringes', delta: -50, reason: 'damaged' },
+        new Date('2026-10-01T09:00:00.000Z'),
+      ),
       visit(keys, '2026-10-01T10:00:00.000Z', { out: { syringes: 30 }, device: DEVICE_A }),
       visit(keys, '2026-10-01T10:05:00.000Z', { out: { syringes: 20 }, device: DEVICE_B }),
     ]);
@@ -77,8 +81,16 @@ describe('Ledger', () => {
   });
 
   it('resolves configuration last-writer-wins regardless of arrival order', () => {
-    const older = createEvent(DEVICE_A, { type: 'config.set', key: 'programName', value: 'Old name' }, new Date('2026-01-01T00:00:00.000Z'));
-    const newer = createEvent(DEVICE_B, { type: 'config.set', key: 'programName', value: 'New name' }, new Date('2026-02-01T00:00:00.000Z'));
+    const older = createEvent(
+      DEVICE_A,
+      { type: 'config.set', key: 'programName', value: 'Old name' },
+      new Date('2026-01-01T00:00:00.000Z'),
+    );
+    const newer = createEvent(
+      DEVICE_B,
+      { type: 'config.set', key: 'programName', value: 'New name' },
+      new Date('2026-02-01T00:00:00.000Z'),
+    );
     expect(new Ledger([newer, older]).config().programName).toBe('New name');
     expect(new Ledger([older, newer]).config().programName).toBe('New name');
     expect(new Ledger().config()).toEqual(DEFAULT_CONFIG);

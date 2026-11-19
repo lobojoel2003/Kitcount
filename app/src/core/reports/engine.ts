@@ -111,7 +111,10 @@ function computeMetric(row: TemplateRow, ctx: Ctx): number {
     case 'visits_with_reversal':
       return visits.filter((v) => v.reversals > 0).length;
     case 'referrals':
-      return visits.reduce((n, v) => n + (row.referral ? v.referrals.filter((r) => row.referral!.includes(r)).length : v.referrals.length), 0);
+      return visits.reduce(
+        (n, v) => n + (row.referral ? v.referrals.filter((r) => row.referral!.includes(r)).length : v.referrals.length),
+        0,
+      );
     case 'participants_referred':
       return unique(visits.filter((v) => hasReferral(v, row.referral)));
     case 'visits_with_referral':

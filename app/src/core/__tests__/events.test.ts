@@ -8,7 +8,14 @@ describe('events', () => {
   const keys = testKeys();
 
   it('creates and validates every event type', () => {
-    const v = visit(keys, '2026-10-02T15:00:00.000Z', { code: 'JD03', out: { syringes: 20, naloxone_nasal: 2 }, syringesIn: 15, reversals: 1, referrals: ['moud', 'moud'], secondary: 2 });
+    const v = visit(keys, '2026-10-02T15:00:00.000Z', {
+      code: 'JD03',
+      out: { syringes: 20, naloxone_nasal: 2 },
+      syringesIn: 15,
+      reversals: 1,
+      referrals: ['moud', 'moud'],
+      secondary: 2,
+    });
     const parsed = roundTrip(v);
     expect(parsed).toEqual({ ...v, referrals: ['moud'] });
     expect(visitUnits(v)).toBe(22);
