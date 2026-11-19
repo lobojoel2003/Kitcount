@@ -84,7 +84,7 @@ jobs:
           POSTGRES_DB: kitcount_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U kitcount"
+          --health-cmd "pg_isready -U kitcount -d kitcount_test"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
@@ -133,7 +133,7 @@ jobs:
           POSTGRES_DB: kitcount
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U kitcount"
+          --health-cmd "pg_isready -U kitcount -d kitcount"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
