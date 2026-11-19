@@ -7,7 +7,7 @@ version="${1:?usage: scripts/release-notes.sh VERSION}"
 notes="$(awk -v v="$version" '
   $0 ~ "^## \\[" v "\\]" { found=1; next }
   found && /^## \[/ { exit }
-  found { print }
+  found && !/^\[[^]]+\]: / { print }
 ' "$root/CHANGELOG.md")"
 if [[ -z "${notes//[[:space:]]/}" ]]; then
   echo "No CHANGELOG.md entry for $version" >&2
