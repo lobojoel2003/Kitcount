@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lobojoel2003/Kitcount/blob/main/templates/schema.json",
+  "title": "Kitcount report template",
+  "description": "Describes a state or funder reporting form. See docs/report-templates.md. The app's validator (app/src/core/reports/template.ts) is authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kitcount_template", "id", "name", "jurisdiction", "period", "sections"],
+  "properties": {
+    "kitcount_template": { "const": 1, "description": "Template format version." },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "description": "Unique id; must match the file name." },
+    "name": { "type": "string", "maxLength": 200 },
+    "jurisdiction": { "type": "string", "maxLength": 120 },
+    "period": { "enum": ["month", "quarter", "year"] },
+    "version": { "type": ["string", "number"] },
+    "description": { "type": "string" },
+    "source": { "type": "string", "description": "Link to the official form or guidance." },
+    "disclaimer": { "type": "string" },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "rows"],
+        "properties": {
+          "title": { "type": "string" },
+          "rows": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/row" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "idList": {
+      "oneOf": [
+        { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$" },
+        { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$" } }
+      ]
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+        "code": { "type": ["string", "number"], "description": "The form's own line number." },
+        "label": { "type": "string", "maxLength": 300 },
+        "help": { "type": "string", "maxLength": 1000 },
+        "metric": {
+          "enum": [
+            "visits",
+            "participants",
+            "new_participants",
+            "returning_participants",
+            "supplies_out",
+            "visits_with_supply",
+            "participants_with_supply",
+            "syringes_in",
+            "reversals",
+            "visits_with_reversal",
+            "referrals",
+            "participants_referred",
+            "visits_with_referral",
+            "secondary",
+            "stock_received",
+            "stock_on_hand",
+            "manual"
+          ]
+        },
+        "formula": { "type": "string", "maxLength": 500, "description": "Arithmetic over other row ids: + - * / ( )." },
+        "format": { "enum": ["integer", "decimal", "percent"] },
+        "supply": { "$ref": "#/$defs/idList" },
+        "referral": { "$ref": "#/$defs/idList" },
+        "anonymous": { "type": "boolean" }
+      },
+      "oneOf": [{ "required": ["metric"] }, { "required": ["formula"] }]
+    }
+  }
+}

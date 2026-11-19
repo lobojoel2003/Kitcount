@@ -9,7 +9,7 @@ import { reportFilename, reportToCsv, reportToHtml } from '../reports/export';
 import { evaluateFormula, formulaRefs, parseFormula } from '../reports/formula';
 import { currentPeriod, customPeriod, monthPeriod, previousPeriod, quarterPeriod, shiftPeriod, yearPeriod } from '../reports/period';
 import { allTemplates, bundledTemplates } from '../reports/registry';
-import { parseTemplate, TemplateError } from '../reports/template';
+import { METRICS, parseTemplate, TemplateError } from '../reports/template';
 import { DEVICE_A, DEVICE_B, received, testKeys, visit } from './fixtures';
 
 const templatesDir = join(__dirname, '..', '..', '..', '..', 'templates');
@@ -36,6 +36,13 @@ describe('bundled templates', () => {
       manualValues: Object.fromEntries(t.sections.flatMap((s) => s.rows.map((row) => [row.id, 1]))),
     });
     expect(r.warnings).toEqual([]);
+  });
+});
+
+describe('templates/schema.json', () => {
+  it('lists exactly the metrics the engine supports', () => {
+    const schema = JSON.parse(readFileSync(join(templatesDir, 'schema.json'), 'utf8'));
+    expect([...schema.$defs.row.properties.metric.enum].sort()).toEqual(Object.keys(METRICS).sort());
   });
 });
 
