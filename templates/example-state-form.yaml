@@ -1,0 +1,121 @@
+# Kitcount report template — EXAMPLE TO ADAPT
+# Docs: docs/report-templates.md
+#
+# This file shows every feature of the template format on a made-up state
+# form. To build your own state's template:
+#   1. Copy this file and change `id`, `name`, `jurisdiction` and `period`.
+#   2. Add one row per line on the state's form. Put the form's own line
+#      number in `code` and its exact wording in `label`.
+#   3. Pick a `metric` for each row (see the list in the docs), or a
+#      `formula` that combines other rows by `id`.
+#   4. Use `metric: manual` for anything Kitcount does not track (staff hours,
+#      events held); staff type those in when they generate the report.
+#   5. Import the file on the Reports tab, or open a pull request to bundle it.
+
+kitcount_template: 1
+id: example-state-form
+name: "Example State — Harm Reduction Program Monthly Data Report"
+jurisdiction: Example State (adapt me)
+period: month
+version: "0.1"
+source: https://example.org/replace-with-your-state-form.pdf
+description: >-
+  Worked example showing line codes, filters, formulas and manually entered
+  rows. Not an official form of any state.
+disclaimer: >-
+  Example only. Replace with your state's official line items before use.
+
+sections:
+  - title: "Section A — Program activity"
+    rows:
+      - id: a1
+        code: A1
+        label: Number of days the program operated this month
+        metric: manual
+        help: Typed in by staff when generating the report.
+      - id: a2
+        code: A2
+        label: Total encounters
+        metric: visits
+      - id: a3
+        code: A3
+        label: Unduplicated participants
+        metric: participants
+      - id: a4
+        code: A4
+        label: New enrollments
+        metric: new_participants
+      - id: a5
+        code: A5
+        label: Average encounters per operating day
+        formula: a2 / a1
+        format: decimal
+
+  - title: "Section B — Syringe exchange"
+    rows:
+      - id: b1
+        code: B1
+        label: Syringes dispensed
+        metric: supplies_out
+        supply: syringes
+      - id: b2
+        code: B2
+        label: Syringes returned
+        metric: syringes_in
+      - id: b3
+        code: B3
+        label: Net syringes in community (B1 − B2)
+        formula: b1 - b2
+        format: integer
+
+  - title: "Section C — Overdose prevention"
+    rows:
+      - id: c1
+        code: C1
+        label: Naloxone kits dispensed
+        metric: supplies_out
+        supply: [naloxone_nasal, naloxone_im]
+      - id: c2
+        code: C2
+        label: Participants receiving naloxone
+        metric: participants_with_supply
+        supply: [naloxone_nasal, naloxone_im]
+      - id: c3
+        code: C3
+        label: Reported overdose reversals
+        metric: reversals
+      - id: c4
+        code: C4
+        label: Encounters at which a reversal was reported
+        metric: visits_with_reversal
+      - id: c5
+        code: C5
+        label: Fentanyl test strips dispensed
+        metric: supplies_out
+        supply: fentanyl_strips
+
+  - title: "Section D — Linkage"
+    rows:
+      - id: d1
+        code: D1
+        label: Referrals to substance use disorder treatment (incl. MOUD)
+        metric: referrals
+        referral: [moud, sud_treatment]
+      - id: d2
+        code: D2
+        label: Referrals to infectious disease testing
+        metric: referrals
+        referral: [hiv_testing, hcv_testing]
+      - id: d3
+        code: D3
+        label: All other referrals
+        formula: d_all - d1 - d2
+        format: integer
+      - id: d_all
+        code: D4
+        label: Total referrals
+        metric: referrals
+      - id: d5
+        code: D5
+        label: Community outreach events held
+        metric: manual

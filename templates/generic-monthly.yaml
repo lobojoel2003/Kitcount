@@ -1,0 +1,169 @@
+# Kitcount report template
+# Docs: docs/report-templates.md
+#
+# A generic monthly activity report covering the measures most state health
+# departments and funders ask syringe services programs for. Use it as-is
+# for internal reporting, or copy it and relabel rows to match your state's
+# form line by line.
+
+kitcount_template: 1
+id: generic-monthly
+name: SSP monthly activity report
+jurisdiction: Generic (any state)
+period: month
+version: "2026.1"
+description: >-
+  Encounters, unduplicated participants, syringe distribution and collection,
+  naloxone, test strips, overdose reversals and referrals for one calendar month.
+disclaimer: >-
+  Generic template. Confirm definitions against your state's current reporting
+  guidance before submitting.
+
+sections:
+  - title: Participants and encounters
+    rows:
+      - id: encounters
+        code: "1.1"
+        label: Total participant encounters
+        metric: visits
+        help: Every logged visit, including participants who declined a code.
+      - id: unique_participants
+        code: "1.2"
+        label: Unduplicated participants served
+        metric: participants
+        help: Unique participant codes seen this month.
+      - id: new_participants
+        code: "1.3"
+        label: New participants (first visit ever)
+        metric: new_participants
+      - id: returning_participants
+        code: "1.4"
+        label: Returning participants
+        metric: returning_participants
+      - id: anonymous_encounters
+        code: "1.5"
+        label: Encounters without a participant code
+        metric: visits
+        anonymous: true
+      - id: secondary_reach
+        code: "1.6"
+        label: People reached through secondary distribution
+        metric: secondary
+
+  - title: Syringes
+    rows:
+      - id: syringes_out
+        code: "2.1"
+        label: Sterile syringes distributed
+        metric: supplies_out
+        supply: syringes
+      - id: syringes_in
+        code: "2.2"
+        label: Used syringes collected
+        metric: syringes_in
+      - id: syringe_return_rate
+        code: "2.3"
+        label: Syringe return rate
+        formula: syringes_in / syringes_out
+        format: percent
+      - id: syringes_per_encounter
+        code: "2.4"
+        label: Syringes distributed per encounter
+        formula: syringes_out / encounters
+        format: decimal
+
+  - title: Naloxone and overdose
+    rows:
+      - id: naloxone_kits
+        code: "3.1"
+        label: Naloxone kits distributed (all formulations)
+        metric: supplies_out
+        supply: [naloxone_nasal, naloxone_im]
+      - id: naloxone_nasal
+        code: "3.1a"
+        label: "— nasal spray"
+        metric: supplies_out
+        supply: naloxone_nasal
+      - id: naloxone_im
+        code: "3.1b"
+        label: "— intramuscular"
+        metric: supplies_out
+        supply: naloxone_im
+      - id: naloxone_recipients
+        code: "3.2"
+        label: Unduplicated participants receiving naloxone
+        metric: participants_with_supply
+        supply: [naloxone_nasal, naloxone_im]
+      - id: reversals
+        code: "3.3"
+        label: Overdose reversals reported by participants
+        metric: reversals
+
+  - title: Drug checking and other supplies
+    rows:
+      - id: fentanyl_strips
+        code: "4.1"
+        label: Fentanyl test strips distributed
+        metric: supplies_out
+        supply: fentanyl_strips
+      - id: xylazine_strips
+        code: "4.2"
+        label: Xylazine test strips distributed
+        metric: supplies_out
+        supply: xylazine_strips
+      - id: sharps_containers
+        code: "4.3"
+        label: Sharps containers distributed
+        metric: supplies_out
+        supply: sharps_containers
+      - id: wound_care
+        code: "4.4"
+        label: Wound care kits distributed
+        metric: supplies_out
+        supply: wound_care
+      - id: smoking_kits
+        code: "4.5"
+        label: Safer smoking kits distributed
+        metric: supplies_out
+        supply: smoking_kits
+
+  - title: Referrals
+    rows:
+      - id: referrals_total
+        code: "5.1"
+        label: Total referrals made
+        metric: referrals
+      - id: participants_referred
+        code: "5.2"
+        label: Unduplicated participants referred
+        metric: participants_referred
+      - id: referrals_moud
+        code: "5.3"
+        label: Referrals to medication for opioid use disorder (MOUD)
+        metric: referrals
+        referral: moud
+      - id: referrals_sud
+        code: "5.4"
+        label: Referrals to other substance use treatment
+        metric: referrals
+        referral: sud_treatment
+      - id: referrals_testing
+        code: "5.5"
+        label: Referrals to HIV or hepatitis C testing
+        metric: referrals
+        referral: [hiv_testing, hcv_testing]
+      - id: referrals_medical
+        code: "5.6"
+        label: Referrals to medical or wound care
+        metric: referrals
+        referral: medical
+      - id: referrals_mental_health
+        code: "5.7"
+        label: Referrals to mental health services
+        metric: referrals
+        referral: mental_health
+      - id: referrals_social
+        code: "5.8"
+        label: Referrals to housing, insurance or benefits
+        metric: referrals
+        referral: [housing, benefits]

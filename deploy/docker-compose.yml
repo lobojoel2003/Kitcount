@@ -1,0 +1,67 @@
+# Kitcount sync server with Postgres.
+#
+#   cp .env.example .env        # then edit the passwords and domain
+#   docker compose up -d                 # API on http://localhost:8080
+#   docker compose --profile https up -d # adds Caddy with automatic HTTPS
+#   docker compose exec server kitcount-server device add -name "Van 1"
+#
+# The server only ever stores encrypted envelopes. Back up the `pgdata`
+# volume like any other database.
+
+name: kitcount
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kitcount
+      POSTGRES_USER: kitcount
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kitcount -d kitcount"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  server:
+    image: ghcr.io/lobojoel2003/kitcount-server:${KITCOUNT_VERSION:-latest}
+    build:
+      context: ../server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KITCOUNT_DATABASE_URL: postgres://kitcount:${POSTGRES_PASSWORD}@db:5432/kitcount?sslmode=disable
+      KITCOUNT_ADMIN_TOKEN: ${KITCOUNT_ADMIN_TOKEN:-}
+      KITCOUNT_TRUST_PROXY: ${KITCOUNT_TRUST_PROXY:-false}
+      KITCOUNT_LOG_FORMAT: json
+    ports:
+      - "${KITCOUNT_PORT:-8080}:8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  caddy:
+    profiles: [https]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [server]
+    environment:
+      KITCOUNT_DOMAIN: ${KITCOUNT_DOMAIN:?set KITCOUNT_DOMAIN in .env for HTTPS}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

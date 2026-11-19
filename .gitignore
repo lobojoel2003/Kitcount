@@ -1,0 +1,18 @@
+# Secrets
+.env
+*.env.local
+deploy/.env
+
+# Build output
+/dist/
+server/kitcount-server
+server/dist/
+coverage/
+*.out
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

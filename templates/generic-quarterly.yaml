@@ -1,0 +1,106 @@
+# Kitcount report template
+# Docs: docs/report-templates.md
+#
+# Quarterly summary with inventory, suitable for funders and boards.
+
+kitcount_template: 1
+id: generic-quarterly
+name: SSP quarterly summary with inventory
+jurisdiction: Generic (any state)
+period: quarter
+version: "2026.1"
+description: >-
+  Quarterly encounters and reach, distribution totals, referrals, and supply
+  received and on hand at quarter end.
+disclaimer: >-
+  Generic template. Confirm definitions against your funder's reporting
+  guidance before submitting.
+
+sections:
+  - title: Reach
+    rows:
+      - id: encounters
+        label: Participant encounters
+        metric: visits
+      - id: participants
+        label: Unduplicated participants
+        metric: participants
+      - id: new_participants
+        label: New participants
+        metric: new_participants
+      - id: encounters_per_participant
+        label: Average encounters per participant
+        formula: (encounters - anonymous) / participants
+        format: decimal
+      - id: anonymous
+        label: Encounters without a participant code
+        metric: visits
+        anonymous: true
+
+  - title: Distribution
+    rows:
+      - id: syringes_out
+        label: Syringes distributed
+        metric: supplies_out
+        supply: syringes
+      - id: syringes_in
+        label: Syringes collected
+        metric: syringes_in
+      - id: return_rate
+        label: Syringe return rate
+        formula: syringes_in / syringes_out
+        format: percent
+      - id: naloxone_out
+        label: Naloxone kits distributed
+        metric: supplies_out
+        supply: [naloxone_nasal, naloxone_im]
+      - id: reversals
+        label: Overdose reversals reported
+        metric: reversals
+      - id: kits_per_reversal
+        label: Naloxone kits distributed per reported reversal
+        formula: naloxone_out / reversals
+        format: decimal
+      - id: test_strips
+        label: Drug checking strips distributed (fentanyl and xylazine)
+        metric: supplies_out
+        supply: [fentanyl_strips, xylazine_strips]
+
+  - title: Linkage to care
+    rows:
+      - id: referrals
+        label: Referrals made
+        metric: referrals
+      - id: referred
+        label: Unduplicated participants referred
+        metric: participants_referred
+      - id: moud
+        label: MOUD referrals
+        metric: referrals
+        referral: moud
+      - id: referral_rate
+        label: Share of encounters with a referral
+        formula: visits_with_referral / encounters
+        format: percent
+      - id: visits_with_referral
+        label: Encounters with at least one referral
+        metric: visits_with_referral
+
+  - title: Inventory
+    rows:
+      - id: syringes_received
+        label: Syringes received
+        metric: stock_received
+        supply: syringes
+      - id: syringes_on_hand
+        label: Syringes on hand at quarter end
+        metric: stock_on_hand
+        supply: syringes
+      - id: naloxone_received
+        label: Naloxone kits received
+        metric: stock_received
+        supply: [naloxone_nasal, naloxone_im]
+      - id: naloxone_on_hand
+        label: Naloxone kits on hand at quarter end
+        metric: stock_on_hand
+        supply: [naloxone_nasal, naloxone_im]

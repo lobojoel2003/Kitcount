@@ -1,0 +1,7 @@
+# Automatic HTTPS in front of kitcount-server.
+# Set KITCOUNT_DOMAIN (e.g. sync.example.org) and KITCOUNT_TRUST_PROXY=true in .env.
+{$KITCOUNT_DOMAIN} {
+	encode gzip
+	reverse_proxy server:8080
+	header -Server
+}
