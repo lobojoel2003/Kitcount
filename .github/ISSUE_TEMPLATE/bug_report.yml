@@ -1,0 +1,37 @@
+name: Bug report
+description: Something in the app or sync server is not working.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never include participant codes, names, screenshots of real data, device tokens or enrollment codes in an issue.**
+        Security problems: please follow SECURITY.md instead of opening a public issue.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options: [Mobile app (Android), Mobile app (iOS), Sync server, Report templates, Web demo, Docs]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and build
+      description: App → Settings → About, or `kitcount-server version`.
+      placeholder: 1.0.0 (build 42)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Steps to reproduce, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Server logs or error messages (remove anything identifying first).
+      render: text

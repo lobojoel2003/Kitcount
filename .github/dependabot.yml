@@ -1,0 +1,44 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      dev-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+      noble-and-yaml:
+        patterns: ['@noble/*', 'yaml']
+    ignore:
+      # Expo SDK, React and React Native move together; upgrade them with `npx expo install --fix`.
+      - dependency-name: 'expo*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'playwright'
+
+  - package-ecosystem: gomod
+    directory: /server
+    schedule:
+      interval: weekly
+    groups:
+      go-deps:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /server
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

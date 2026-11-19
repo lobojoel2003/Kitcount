@@ -64,6 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
+    './plugins/withReleaseSigning',
     // Encrypt the on-device database with SQLCipher.
     ['expo-sqlite', { useSQLCipher: true }],
     ['expo-secure-store', { faceIDPermission: false, configureAndroidBackup: true }],

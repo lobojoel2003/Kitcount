@@ -1,0 +1,35 @@
+name: State report template
+description: Ask for (or offer) a report template for a state or funder.
+labels: [report-template]
+body:
+  - type: input
+    id: jurisdiction
+    attributes:
+      label: State or funder
+      placeholder: e.g. Kentucky Department for Public Health
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Link to the official reporting form or guidance
+    validations:
+      required: true
+  - type: dropdown
+    id: period
+    attributes:
+      label: Reporting period
+      options: [Monthly, Quarterly, Yearly]
+    validations:
+      required: true
+  - type: textarea
+    id: items
+    attributes:
+      label: Line items Kitcount does not track yet
+      description: Anything that would need a new metric, or should be a manually entered row.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I can draft the YAML template (see docs/report-templates.md)

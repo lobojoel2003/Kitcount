@@ -249,6 +249,8 @@ export class Session {
     this.ledger = new Ledger();
     this.importedTemplates = [];
     this.syncCreds = null;
+    // A sync interrupted by locking must not leave the "running" guard set.
+    this.sync = { ...this.sync, running: false };
     clearExports();
   }
 

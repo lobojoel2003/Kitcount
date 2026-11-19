@@ -1,0 +1,276 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      skip-android:
+        description: Skip the Android build (the release workflow builds its own)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: 22
+  KITCOUNT_TEST_ADMIN_TOKEN: ci-admin-token-not-a-secret-0123456789abcdef
+
+jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.VERSION }}
+      build: ${{ steps.v.outputs.BUILD }}
+      commit: ${{ steps.v.outputs.COMMIT }}
+      date: ${{ steps.v.outputs.DATE }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: v
+        run: scripts/version.sh | tee -a "$GITHUB_OUTPUT"
+
+  app:
+    name: App · lint, types, unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: Report templates are bundled
+        run: npm run templates:check
+      - name: Formatting
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm run test:ci
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: app-coverage
+          path: app/coverage/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  server:
+    name: Server · vet, tests (Postgres), vulnerabilities
+    runs-on: ubuntu-latest
+    needs: version
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: kitcount
+          POSTGRES_PASSWORD: kitcount
+          POSTGRES_DB: kitcount_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kitcount"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then echo "Run gofmt on:"; echo "$unformatted"; exit 1; fi
+      - name: go vet
+        run: go vet ./...
+      - name: Tests (memory + Postgres contract)
+        env:
+          KITCOUNT_TEST_DATABASE_URL: postgres://kitcount:kitcount@localhost:5432/kitcount_test?sslmode=disable
+        run: go test -race -count=1 -coverprofile=coverage.out ./...
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+      - name: Build
+        run: |
+          go build -trimpath -ldflags "-s -w \
+            -X github.com/lobojoel2003/Kitcount/server/internal/version.Version=${{ needs.version.outputs.version }} \
+            -X github.com/lobojoel2003/Kitcount/server/internal/version.Build=${{ needs.version.outputs.build }} \
+            -X github.com/lobojoel2003/Kitcount/server/internal/version.Commit=${{ needs.version.outputs.commit }}" \
+            -o kitcount-server ./cmd/kitcount-server
+          ./kitcount-server version
+
+  e2e:
+    name: End-to-end · app sync client ↔ server ↔ Postgres
+    runs-on: ubuntu-latest
+    needs: [app, server]
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: kitcount
+          POSTGRES_PASSWORD: kitcount
+          POSTGRES_DB: kitcount
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kitcount"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Start kitcount-server
+        working-directory: server
+        env:
+          KITCOUNT_DATABASE_URL: postgres://kitcount:kitcount@localhost:5432/kitcount?sslmode=disable
+          KITCOUNT_ADMIN_TOKEN: ${{ env.KITCOUNT_TEST_ADMIN_TOKEN }}
+          KITCOUNT_LISTEN: 127.0.0.1:8080
+          KITCOUNT_RATE_LIMIT: '500'
+        run: |
+          go build -o kitcount-server ./cmd/kitcount-server
+          nohup ./kitcount-server serve > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if ./kitcount-server healthcheck -url http://127.0.0.1:8080/healthz; then exit 0; fi
+            sleep 1
+          done
+          cat server.log
+          exit 1
+      - run: npm ci
+        working-directory: app
+      - name: Sync end-to-end tests
+        working-directory: app
+        env:
+          KITCOUNT_E2E_URL: http://127.0.0.1:8080
+          KITCOUNT_E2E_ADMIN_TOKEN: ${{ env.KITCOUNT_TEST_ADMIN_TOKEN }}
+        run: npm run test:e2e
+      - name: Server log
+        if: always()
+        run: cat server/server.log || true
+
+  web:
+    name: Web demo · export and browser smoke test
+    runs-on: ubuntu-latest
+    needs: app
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Export web demo
+        run: npm run export:web
+      - name: Smoke test (log a visit, lock/unlock, panic wipe)
+        run: npm run test:web
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: web-smoke-screenshots
+          path: app/dist-smoke/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    needs: version
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: server
+          load: true
+          push: false
+          tags: kitcount-server:ci
+          build-args: |
+            VERSION=${{ needs.version.outputs.version }}
+            BUILD=${{ needs.version.outputs.build }}
+            COMMIT=${{ needs.version.outputs.commit }}
+            DATE=${{ needs.version.outputs.date }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run image
+        run: |
+          docker run --rm kitcount-server:ci version
+          docker run -d --name kc -e KITCOUNT_DATABASE_URL=memory -p 8080:8080 kitcount-server:ci
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/healthz && exit 0; sleep 1; done
+          docker logs kc
+          exit 1
+
+  android:
+    name: Android · release APK
+    runs-on: ubuntu-latest
+    needs: [version, app]
+    # Not on pull requests (slow); always on main. Reusable callers can opt out.
+    if: ${{ github.event_name != 'pull_request' && !inputs.skip-android }}
+    timeout-minutes: 60
+    env:
+      KITCOUNT_BUILD_NUMBER: ${{ needs.version.outputs.build }}
+      KITCOUNT_COMMIT: ${{ needs.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+        working-directory: app
+      - name: Generate native project
+        working-directory: app
+        run: npx expo prebuild --platform android --no-install --clean
+      - name: Build release APK
+        working-directory: app/android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a,x86_64
+      - name: Rename
+        run: |
+          mkdir -p out
+          cp app/android/app/build/outputs/apk/release/app-release.apk \
+            "out/kitcount-${{ needs.version.outputs.version }}-build${{ needs.version.outputs.build }}-ci.apk"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android-apk
+          path: out/*.apk
+          retention-days: 30

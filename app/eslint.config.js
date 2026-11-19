@@ -16,7 +16,7 @@ module.exports = defineConfig([
   },
   {
     // Node-side tooling.
-    files: ['*.config.js', 'jest.*.js', 'scripts/**'],
+    files: ['*.config.js', 'jest.*.js', 'scripts/**', 'plugins/**'],
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },
   },
